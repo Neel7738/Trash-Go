@@ -12,27 +12,33 @@
 <body>
     <nav>
         <img src="logo.jpeg" alt="TrashGo Logo" class="logo">
-        <div id="nav-links" class="nav-actions">
+        
+        <div class="nav-center">
             <div class="points-badge">
                 <span id="user-points">🌱 0 Pts</span>
             </div>
             <div class="progress-track">
                 <div id="points-progress" class="progress-fill"></div>
             </div>
-            <span id="user-name" style="font-weight: 700; color: var(--text-main);"></span>
-            <button onclick="logout()" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Logout</button>
+        </div>
+
+        <div id="nav-links" class="nav-actions">
+            <div class="nav-user-info">
+                <span id="user-name" style="font-weight: 700; color: var(--text-main);"></span>
+            </div>
+            <button onclick="logout()" class="btn-secondary">Logout</button>
         </div>
     </nav>
 
     <div class="container">
         <header class="text-center mt-5 mb-4">
-            <h1 class="hero-title text-gradient" style="font-size: 3.5rem; margin-bottom: 1rem;">Eco-Warrior<br>Dashboard</h1>
-            <p class="text-muted" style="font-size: 1.2rem;">Your actions grow a greener future! 🌍✨</p>
+            <h1 class="hero-title text-gradient">Eco-Warrior<br>Dashboard</h1>
+            <p class="text-muted hero-subtitle">Your actions grow a greener future! 🌍✨</p>
         </header>
 
         <section id="report-section" class="mb-5">
-            <form id="report-form" class="glass-panel" style="max-width: 600px; margin: 0 auto; padding: 2.5rem;" enctype="multipart/form-data">
-                <h2 class="mb-3 text-gradient">Log a Discovery</h2>
+            <form id="report-form" class="glass-panel report-form-container" enctype="multipart/form-data">
+                <h2 class="mb-3 text-gradient section-title">Log a Discovery</h2>
                 
                 <div class="form-control">
                     <textarea id="description" class="form-input" placeholder="What did you find? (e.g., Plastic bottles near the park...)" required></textarea>
@@ -52,10 +58,10 @@
                     </div>
                 </div>
 
-                <div class="mb-3" style="display: flex; gap: 1rem;">
-                    <button type="button" id="open-camera" class="btn-secondary" style="flex: 1;">📸 Scanner</button>
-                    <button type="button" id="capture-photo" class="btn-primary" style="display: none; flex: 1;">🎯 Capture</button>
-                    <button type="button" id="retake-photo" class="btn-secondary" style="display: none; flex: 1;">🔄 Retake</button>
+                <div class="mb-3" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button type="button" id="open-camera" class="btn-secondary" style="flex: 1; min-width: 120px;">📸 Scanner</button>
+                    <button type="button" id="capture-photo" class="btn-primary" style="display: none; flex: 1; min-width: 120px;">🎯 Capture</button>
+                    <button type="button" id="retake-photo" class="btn-secondary" style="display: none; flex: 1; min-width: 120px;">🔄 Retake</button>
                 </div>
 
                 <div class="form-control text-center">
@@ -71,13 +77,13 @@
 
 
         <section id="heatmap-section" class="mt-5 mb-5">
-            <h2 class="text-gradient" style="font-size: 2.5rem;">Waste Hotspots</h2>
-            <div id="heatmap-container" class="glass-panel" style="height: 400px; width: 100%; border-radius: 24px; overflow: hidden; margin-top: 1rem; position: relative; z-index: 1;"></div>
+            <h2 class="text-gradient section-title">Waste Hotspots</h2>
+            <div id="heatmap-container" class="glass-panel heatmap-container"></div>
         </section>
 
         <section id="leaderboard-section" class="mt-5 mb-5">
-            <h2 class="text-gradient-alt" style="font-size: 2.5rem;">Top Eco-Warriors</h2>
-            <div class="glass-panel" style="padding: 2rem; border-radius: 24px;">
+            <h2 class="text-gradient-alt section-title">Top Eco-Warriors</h2>
+            <div class="glass-panel">
                 <ol id="leaderboard-list" class="leaderboard-list">
                     <!-- Leaderboard loaded here -->
                 </ol>
@@ -85,7 +91,7 @@
         </section>
 
         <section id="my-reports" class="mt-5 mb-5">
-            <h2 class="text-gradient-alt" style="font-size: 2.5rem;">My Earth Actions</h2>
+            <h2 class="text-gradient-alt section-title">My Earth Actions</h2>
             <div id="reports-list" class="reports-grid">
                 <!-- User reports will be loaded here -->
             </div>
@@ -93,13 +99,13 @@
 
         <section id="rewards-section" class="mt-5 mb-5">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-                <h2 class="text-gradient" style="font-size: 2.5rem;">Rewards Catalog</h2>
+                <h2 class="text-gradient section-title">Rewards Catalog</h2>
                 <div class="points-badge" style="font-size: 1.1rem;">
                     Available: <span id="available-points" style="margin-left:5px;">0</span> Pts
                 </div>
             </div>
             <div class="rewards-grid">
-                <div class="glass-panel" style="padding: 2rem; text-align: center; border-radius: 24px;">
+                <div class="glass-panel" style="text-align: center;">
                     <div class="reward-icon">💡</div>
                     <div class="reward-info">
                         <h3>Light Bill Discount</h3>
@@ -109,7 +115,7 @@
                     <button id="redeem-bill" onclick="redeemReward(1000, '10% Light Bill Discount')" class="btn-primary">Redeem</button>
                 </div>
                 
-                <div class="glass-panel" style="padding: 2rem; text-align: center; border-radius: 24px;">
+                <div class="glass-panel" style="text-align: center;">
                     <div class="reward-icon">🚌</div>
                     <div class="reward-info">
                         <h3>Eco-Transit Pass</h3>
@@ -119,7 +125,7 @@
                     <button onclick="redeemReward(500, 'Eco-Transit Pass')" class="btn-primary">Redeem</button>
                 </div>
 
-                <div class="glass-panel" style="padding: 2rem; text-align: center; border-radius: 24px;">
+                <div class="glass-panel" style="text-align: center;">
                     <div class="reward-icon">☕</div>
                     <div class="reward-info">
                         <h3>Green Cafe Coupon</h3>
@@ -130,6 +136,7 @@
                 </div>
             </div>
         </section>
+
     </div>
 
     <!-- Success Animation Overlay -->

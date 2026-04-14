@@ -355,13 +355,14 @@ async function loadAllReports() {
             groupEl.style.overflow = 'hidden';
             groupEl.style.marginBottom = '1.5rem';
 
-            // Accordion Header
             const header = document.createElement('div');
             header.style.padding = '1.5rem 2rem';
             header.style.cursor = 'pointer';
             header.style.display = 'flex';
             header.style.justifyContent = 'space-between';
             header.style.alignItems = 'center';
+            header.style.flexWrap = 'wrap';
+            header.style.gap = '10px';
             header.style.background = 'rgba(0, 0, 0, 0.2)';
             header.style.transition = 'background 0.3s';
             header.onmouseover = () => header.style.background = 'rgba(0, 255, 115, 0.05)';
@@ -381,7 +382,7 @@ async function loadAllReports() {
             
             const grid = document.createElement('div');
             grid.style.display = 'grid';
-            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
+            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))';
             grid.style.gap = '2rem';
 
             // Populate reports
