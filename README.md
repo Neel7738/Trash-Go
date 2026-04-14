@@ -36,43 +36,6 @@ TrashGo is a full-stack civic-tech platform that connects citizens with governme
 └── .env                # Environment variables (not tracked in Git)
 ```
 
-## ⚙️ Setup Instructions
-
-### 1. Prerequisites
-- Node.js (v18+) installed.
-- A MongoDB Atlas account.
-- A Cloudinary account for image hosting.
-
-### 2. Configuration
-Create a `.env` file in the root directory and fill in your credentials:
-
-```env
-PORT=5000
-MONGODB_URI=your_mongodb_atlas_uri
-JWT_SECRET=your_jwt_secret_key
-CLOUDINARY_CLOUD_NAME=your_cloudinary_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-ADMIN_EMAIL=admin@trashgo.com
-ADMIN_PASSWORD=admin123
-```
-
-### 3. Installation
-```bash
-npm install
-```
-
-### 4. Database Initialization (Optional)
-To quickly set up or reset your admin credentials, run:
-```bash
-node init_admin.js
-```
-
-### 5. Running the App
-```bash
-npm start
-```
-The app will be available at `http://localhost:5000`.
 
 ## 🔄 Application Flow
 
