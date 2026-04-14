@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrashGo - Citizen Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+</head>
+<body>
+    <nav>
+        <img src="logo.jpeg" alt="TrashGo Logo" class="logo">
+        <div id="nav-links" class="nav-actions">
+            <div class="points-badge">
+                <span id="user-points">🌱 0 Pts</span>
+            </div>
+            <div class="progress-track">
+                <div id="points-progress" class="progress-fill"></div>
+            </div>
+            <span id="user-name" style="font-weight: 700; color: var(--text-main);"></span>
+            <button onclick="logout()" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header class="text-center mt-5 mb-4">
+            <h1 class="hero-title text-gradient" style="font-size: 3.5rem; margin-bottom: 1rem;">Eco-Warrior<br>Dashboard</h1>
+            <p class="text-muted" style="font-size: 1.2rem;">Your actions grow a greener future! 🌍✨</p>
+        </header>
+
+        <section id="report-section" class="mb-5">
+            <form id="report-form" class="glass-panel" style="max-width: 600px; margin: 0 auto; padding: 2.5rem;" enctype="multipart/form-data">
+                <h2 class="mb-3 text-gradient">Log a Discovery</h2>
+                
+                <div class="form-control">
+                    <textarea id="description" class="form-input" placeholder="What did you find? (e.g., Plastic bottles near the park...)" required></textarea>
+                </div>
+                
+                <div class="scanner-wrapper">
+                    <div id="camera-interface" style="width:100%; height:100%; position:relative;">
+                        <video id="camera-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                        <canvas id="photo-canvas" style="display: none;"></canvas>
+                        <img id="photo-preview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                        
+                        <!-- Scanner Effect -->
+                        <div id="scanner-overlay" class="scanner-overlay">
+                            <div class="scanner-line"></div>
+                            <div class="scanner-corners"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3" style="display: flex; gap: 1rem;">
+                    <button type="button" id="open-camera" class="btn-secondary" style="flex: 1;">📸 Scanner</button>
+                    <button type="button" id="capture-photo" class="btn-primary" style="display: none; flex: 1;">🎯 Capture</button>
+                    <button type="button" id="retake-photo" class="btn-secondary" style="display: none; flex: 1;">🔄 Retake</button>
+                </div>
+
+                <div class="form-control text-center">
+                    <button type="button" onclick="getLocation()" id="location-btn" class="btn-secondary mb-1">📍 Get Coordinates</button>
+                    <p id="location-display" class="text-muted" style="font-size: 0.85rem;">Waiting for location...</p>
+                    <input type="hidden" id="latitude">
+                    <input type="hidden" id="longitude">
+                </div>
+                
+                <button type="submit" class="btn-primary">🚀 Submit to Network</button>
+            </form>
+        </section>
+
+
+        <section id="heatmap-section" class="mt-5 mb-5">
+            <h2 class="text-gradient" style="font-size: 2.5rem;">Waste Hotspots</h2>
+            <div id="heatmap-container" class="glass-panel" style="height: 400px; width: 100%; border-radius: 24px; overflow: hidden; margin-top: 1rem; position: relative; z-index: 1;"></div>
+        </section>
+
+        <section id="leaderboard-section" class="mt-5 mb-5">
+            <h2 class="text-gradient-alt" style="font-size: 2.5rem;">Top Eco-Warriors</h2>
+            <div class="glass-panel" style="padding: 2rem; border-radius: 24px;">
+                <ol id="leaderboard-list" class="leaderboard-list">
+                    <!-- Leaderboard loaded here -->
+                </ol>
+            </div>
+        </section>
+
+        <section id="my-reports" class="mt-5 mb-5">
+            <h2 class="text-gradient-alt" style="font-size: 2.5rem;">My Earth Actions</h2>
+            <div id="reports-list" class="reports-grid">
+                <!-- User reports will be loaded here -->
+            </div>
+        </section>
+
+        <section id="rewards-section" class="mt-5 mb-5">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <h2 class="text-gradient" style="font-size: 2.5rem;">Rewards Catalog</h2>
+                <div class="points-badge" style="font-size: 1.1rem;">
+                    Available: <span id="available-points" style="margin-left:5px;">0</span> Pts
+                </div>
+            </div>
+            <div class="rewards-grid">
+                <div class="glass-panel" style="padding: 2rem; text-align: center; border-radius: 24px;">
+                    <div class="reward-icon">💡</div>
+                    <div class="reward-info">
+                        <h3>Light Bill Discount</h3>
+                        <p class="text-muted mb-2">10% discount on your next electricity bill.</p>
+                        <div class="reward-cost">💰 1000 Pts</div>
+                    </div>
+                    <button id="redeem-bill" onclick="redeemReward(1000, '10% Light Bill Discount')" class="btn-primary">Redeem</button>
+                </div>
+                
+                <div class="glass-panel" style="padding: 2rem; text-align: center; border-radius: 24px;">
+                    <div class="reward-icon">🚌</div>
+                    <div class="reward-info">
+                        <h3>Eco-Transit Pass</h3>
+                        <p class="text-muted mb-2">5 Free rides on any electric public transport.</p>
+                        <div class="reward-cost">💰 500 Pts</div>
+                    </div>
+                    <button onclick="redeemReward(500, 'Eco-Transit Pass')" class="btn-primary">Redeem</button>
+                </div>
+
+                <div class="glass-panel" style="padding: 2rem; text-align: center; border-radius: 24px;">
+                    <div class="reward-icon">☕</div>
+                    <div class="reward-info">
+                        <h3>Green Cafe Coupon</h3>
+                        <p class="text-muted mb-2">One free organic coffee at partner cafes.</p>
+                        <div class="reward-cost">💰 200 Pts</div>
+                    </div>
+                    <button onclick="redeemReward(200, 'Green Cafe Coupon')" class="btn-primary">Redeem</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Success Animation Overlay -->
+    <div id="success-overlay" class="success-overlay">
+        <div class="sprout-icon">🌱</div>
+        <div class="success-message">Action Logged!</div>
+        <p style="font-size: 1.2rem; margin-top:1rem; opacity: 0.8;">The earth thanks you.</p>
+    </div>
+
+    <footer class="site-footer">
+        <p>© 2026 TrashGo  Built by Niraj</p>
+        <div class="footer-links">
+            <a href="https://www.linkedin.com/in/niraj-nandre" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a href="https://github.com/Neel7738" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
