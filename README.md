@@ -2,58 +2,104 @@
 
 TrashGo is a full-stack civic-tech platform that connects citizens with government authorities for efficient waste management. It empowers users to report waste accumulation in their localities and allows administrators to manage and track the cleanup process effectively.
 
+---
+
 ## 🚀 Features
 
+### 👤 Citizen Portal
 - **User Authentication:** Secure signup and login with JWT-based sessions.
-- **Report Submission:** Citizens can upload images of garbage, provide descriptions, and share their precise geolocation.
-- **Gamification & Leaderboard:** Users earn Eco-Points for reporting and successful cleanups. A real-time leaderboard ranks Top Eco-Warriors to encourage friendly competition!
-- **Heatmap Visualizations:** Interactive maps powered by Leaflet automatically visualize high-priority problem areas to both admins and citizens.
-- **Automated Priority Calculation:** Reports are automatically prioritized based on their proximity to other reports, helping admins identify major waste clusters.
-- **Admin Dashboard:** Admins can view all reports, grouped logically by location (using OpenStreetMap reverse geocoding), and manage their status (Pending, In Progress, Completed).
-- **Time-Lapse Sliders:** Cleanups are visually verified by admins using dynamic sliders showcasing before/after images seamlessly.
-- **Glassmorphic Web Interface:** Immersive UI using customized dark-theme variables, modern responsive grids, and integrated hardware APIs.
+- **AI-Powered Waste Scanning:** Integrates with the **Google Gemini API** to automatically analyze waste uploads:
+  - **Smart Validation:** Instantly rejects non-garbage images to prevent spam reporting.
+  - **Auto-Categorization:** Classifies waste into types (Plastic, Metal, Electronic, Paper, Biohazard, or General).
+  - **Severity Scoring:** Automatically rates severity (Low, Medium, High).
+- **Proximity-Based Priority Scoring:** Clusters nearby reports within an ~111m radius and scales the report's priority score combined with the AI-determined severity weight (+1 for Low, +3 for Medium, +5 for High).
+- **Gamification & Dynamic Eco-Points:** Citizens earn a base of 10 Eco-Points for reporting, plus bonus points based on report severity (+5 for Medium, +10 for High), and another 50 points upon successful cleanup. A real-time leaderboard ranks the Top 3 Eco-Warriors.
+- **Interactive Onboarding Tour:** Embedded walk-through guided tour using `driver.js` to introduce the portal's UI components to new users.
+- **Completed Cleanup Alerts:** Real-time citizen alerts when reports are marked as completed. Alerts feature a custom interactive before/after comparison time-lapse slider showing the site restoration.
+
+### 🛡️ Admin Dashboard
+- **Location-based Grouping:** Automatically groups reports by geographical coordinates using OpenStreetMap reverse-geocoding, allowing admins to manage entire waste clusters collectively.
+- **Interactive Heatmap:** Integrates Leaflet.js to render hotspot visualizations representing high-priority trash accumulation zones.
+- **Eco-Warriors Network Directory:** A dedicated table monitoring registered users, displaying their rankings, emails, accumulated Eco-Points, and signup details.
+- **Rewards Redemption Manager:** A persistent logs manager where admins can view reward claim codes, search/filter user requests, and mark redemptions as Approved/Disbursed.
+- **Verification Sliders:** Admins can upload a post-cleanup verification image and resolve reports using visual comparison sliders.
+
+---
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** HTML5, CSS3, Vanilla JavaScript, Leaflet.js (for Heatmaps)
+- **Frontend:** HTML5, CSS3, Vanilla JavaScript, Leaflet.js (Heatmaps), `driver.js` (Onboarding Tour)
 - **Backend:** Node.js, Express.js (v5+)
+- **AI Engine:** Google Gemini AI API (`@google/generative-ai` SDK)
 - **Database:** MongoDB Atlas with Mongoose
 - **Image Storage:** Cloudinary
 - **Geocoding:** OpenStreetMap (Nominatim API)
-- **AI Integration (Experimental):** Ready for Google Gemini integration.
+
+---
 
 ## 📁 Project Structure
 
 ```text
-├── config/             # Configuration for DB and Cloudinary
-├── middleware/         # Custom Express middlewares (auth, admin)
-├── models/             # Mongoose schemas (User, Report)
-├── public/             # Static frontend files (HTML, CSS, JS)
-├── routes/             # API route handlers
-├── server.js           # Main application entry point
-├── init_admin.js       # Utility script to initialize or reset admin user
+├── config/             # DB connection configurations & Cloudinary upload rules
+├── middleware/         # Custom Express middlewares (auth token validation, admin role guard)
+├── models/             # Mongoose database schemas:
+│   ├── User.js         # Citizen profile & Eco-Points ledger
+│   ├── Report.js       # Waste coordinates, category, severity, and status
+│   └── Redemption.js   # Persistent reward claim records
+├── public/             # Glassmorphic dark-themed web assets:
+│   ├── index.html      # Citizen application dashboard
+│   ├── admin.html      # Administrator control suite
+│   ├── style.css       # Premium custom dark stylesheet
+│   └── script.js       # Client API routing & Leaflet maps logic
+├── routes/             # Backend API endpoint routes:
+│   ├── auth.js         # Login, registration, leaderboard, & redemption APIs
+│   └── reports.js      # Report submissions, geocoding, Gemini scans, & notifications
+├── server.js           # Main application launch script
+├── init_admin.js       # Utility database script to bootstrap administrative profiles
 ├── diagnose_db.js      # Utility script for database diagnostics
-└── .env                # Environment variables (not tracked in Git)
+└── .env                # Secrets & environment configurations (ignored by git)
 ```
 
+---
 
-## 🔄 Application Flow
+## 🔄 Core Application Flow
 
-1. **Signup:** Create a new user account to start earning Eco-Points.
-2. **Report:** Fill out the report form, capture/upload an image, and submit your location.
-3. **Earn Points:** Receive 10 Eco-Points for each submission and another 50 when the cleanup is completed.
-4. **Admin Review:** Administrators log in to view clusters of reports, navigate to locations, and update statuses.
-5. **Completion:** Admin uploads a verification image of the cleaned area to resolve the report.
+```mermaid
+graph TD
+    A[Citizen Register/Login] -->|Optional Onboarding| B[Interactive Tour]
+    B --> C[Upload Waste Picture]
+    C -->|Gemini AI Scan| D{Contains Waste?}
+    D -->|No| E[Reject Submission]
+    D -->|Yes| F[Save Report & Group in Cluster]
+    F -->|Calculate Points| G[Award Eco-Points Base + Severity Bonus]
+    G --> H[Render Admin Heatmaps & Dashboards]
+    H -->|Admin Commits Cleanup| I[Admin Uploads Cleanup Proof]
+    I -->|Notification Alert| J[Citizen Receives Before/After Slider Notification]
+```
+
+1. **Onboard:** New users can trigger the interactive tour to familiarize themselves with the portal.
+2. **Scan:** Users submit a geo-tagged cleanup report. The integrated Google Gemini AI engine validates the image, categorizes it, and scores its severity.
+3. **Queue:** Valid reports are grouped into regional clusters. Points are credited based on the severity class.
+4. **Resolve:** Admins track cleanups on the heatmap dashboard, record completion proof, and update the report status.
+5. **Notify:** The reporting citizen receives an instant notification popup showing the before/after comparison time-lapse slider.
+
+---
+
+---
 
 ## 🔮 Future Scope
-- **AI-Based Waste Detection:** Automatic classification of waste types using generative models.
 - **Mobile Application:** Native Android/iOS versions for robust offline reporting capabilities.
-- **Automated Verification:** Smart image verification to ensure "After" cleanup images align with the coordinates of the "Before" images.
+- **Automated Verification:** Smart image comparison algorithms to ensure "After" cleanup images align with the coordinates of the "Before" images without admin overhead.
+- **Public-Facing Rewards Store:** Dynamic marketplace integration for users to trade points for physical reward vouchers.
+
+---
 
 ## 👨‍💻 Creator
 Built by **Niraj**. Connect with me:
 - **LinkedIn:** [www.linkedin.com/in/niraj-nandre](https://www.linkedin.com/in/niraj-nandre)
 - **GitHub:** [https://github.com/Neel7738](https://github.com/Neel7738)
+
+---
 
 ## 📜 License
 This project is licensed under the ISC License.

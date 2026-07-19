@@ -1,7 +1,8 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { protect } = require('../middleware/auth');
+const Redemption = require('../models/Redemption');
+const { protect, admin } = require('../middleware/auth');
 const router = express.Router();
 
 const generateToken = (id) => {
@@ -70,7 +71,16 @@ router.get('/profile', protect, async (req, res) => {
 
 router.get('/leaderboard', async (req, res) => {
     try {
-        const users = await User.find({ role: 'user' }).sort({ ecoPoints: -1 }).limit(10).select('name ecoPoints');
+        const users = await User.find({ role: 'user' }).sort({ ecoPoints: -1 }).limit(3).select('name ecoPoints');
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.get('/users', protect, admin, async (req, res) => {
+    try {
+        const users = await User.find({ role: 'user' }).sort({ ecoPoints: -1 }).select('name email ecoPoints createdAt');
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -91,11 +101,47 @@ router.post('/redeem', protect, async (req, res) => {
         // Generate a random 8-character alphanumeric code
         const redeemCode = Math.random().toString(36).substring(2, 10).toUpperCase();
         
+        // Create persistent database entry for redemption
+        const redemption = new Redemption({
+            userId: user._id,
+            reward,
+            points,
+            code: redeemCode
+        });
+        await redemption.save();
+        
         res.json({ 
             message: `Successfully redeemed ${reward}!`,
             redeemCode: redeemCode,
             newPoints: user.ecoPoints 
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.get('/redemptions', protect, admin, async (req, res) => {
+    try {
+        const redemptions = await Redemption.find({})
+            .populate('userId', 'name email')
+            .sort({ status: 1, createdAt: -1 });
+        res.json(redemptions);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.put('/redemptions/:id', protect, admin, async (req, res) => {
+    try {
+        const redemption = await Redemption.findById(req.params.id);
+        if (!redemption) {
+            return res.status(404).json({ message: 'Redemption not found' });
+        }
+        
+        redemption.status = 'Approved';
+        await redemption.save();
+        
+        res.json({ message: 'Redemption marked as Approved/Disbursed', redemption });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

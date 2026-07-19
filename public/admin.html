@@ -32,6 +32,58 @@
             <div id="heatmap-container" class="glass-panel heatmap-container"></div>
         </section>
 
+        <section id="warriors-section" class="mb-5">
+            <h2 class="text-gradient-alt section-title">Eco-Warriors Network</h2>
+            <div class="glass-panel" style="padding: 1.5rem 2rem;">
+                <div style="overflow-x: auto;">
+                    <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--panel-border); color: var(--primary);">
+                                <th style="padding: 1rem 0.5rem; font-family: 'Clash Display', sans-serif; font-size: 0.9rem; font-weight: 700;">Rank</th>
+                                <th style="padding: 1rem 0.5rem; font-family: 'Clash Display', sans-serif; font-size: 0.9rem; font-weight: 700;">Name</th>
+                                <th style="padding: 1rem 0.5rem; font-family: 'Clash Display', sans-serif; font-size: 0.9rem; font-weight: 700;">Email</th>
+                                <th style="padding: 1rem 0.5rem; font-family: 'Clash Display', sans-serif; font-size: 0.9rem; font-weight: 700;">Eco-Points</th>
+                                <th style="padding: 1rem 0.5rem; font-family: 'Clash Display', sans-serif; font-size: 0.9rem; font-weight: 700;">Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-warriors-list">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading eco-warriors list...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="redemptions-section" class="mb-5">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <h2 class="text-gradient section-title" style="margin: 0;">Rewards Redemptions</h2>
+                <input type="text" id="redemption-search" oninput="filterRedemptions()" placeholder="🔍 Search user, email or code..." class="form-input" style="max-width: 300px; padding: 0.6rem 1rem; border-radius: 50px;">
+            </div>
+            <div class="glass-panel" style="padding: 1.5rem 2rem;">
+                <div style="overflow-x: auto;">
+                    <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--panel-border); color: var(--primary);">
+                                <th style="padding: 1rem 0.5rem; font-family: 'Clash Display', sans-serif; font-size: 0.9rem; font-weight: 700;">User</th>
+                                <th style="padding: 1rem 0.5rem; font-family: 'Clash Display', sans-serif; font-size: 0.9rem; font-weight: 700;">Reward Item</th>
+                                <th style="padding: 1rem 0.5rem; font-family: 'Clash Display', sans-serif; font-size: 0.9rem; font-weight: 700;">Claim Code</th>
+                                <th style="padding: 1rem 0.5rem; font-family: 'Clash Display', sans-serif; font-size: 0.9rem; font-weight: 700;">Points</th>
+                                <th style="padding: 1rem 0.5rem; font-family: 'Clash Display', sans-serif; font-size: 0.9rem; font-weight: 700;">Status</th>
+                                <th style="padding: 1rem 0.5rem; font-family: 'Clash Display', sans-serif; font-size: 0.9rem; font-weight: 700;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-redemptions-list">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading redemptions log...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <div id="location-groups-container" style="display: flex; flex-direction: column; gap: 1.5rem;">
             <!-- Accordion items loaded dynamically -->
             <div style="text-align: center; color: var(--text-muted);">Grouping reports by 110m radius locations...</div>

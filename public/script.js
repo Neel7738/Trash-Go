@@ -10,7 +10,16 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname.
         if (document.getElementById('user-name')) document.getElementById('user-name').innerText = user.name;
         loadMyReports();
         loadLeaderboard();
+        checkCleanupNotifications();
         initHeatmap();
+
+        // Auto-trigger onboarding tour for first-time users
+        setTimeout(() => {
+            const tourCompleted = localStorage.getItem('trashgo-tour-completed');
+            if (!tourCompleted) {
+                startOnboardingTour();
+            }
+        }, 1000);
     }
 }
 
@@ -19,6 +28,8 @@ if (window.location.pathname.includes('admin.html')) {
     else {
         if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = user.name;
         loadAllReports();
+        loadAdminWarriors();
+        loadAdminRedemptions();
         initHeatmap();
     }
 }
@@ -269,7 +280,16 @@ async function loadMyReports() {
             const level = Math.floor(points / 100) + 1;
             const progressInLevel = points % 100;
             const progressBar = document.getElementById('points-progress');
-            progressBar.style.width = `${progressInLevel}%`;
+            if (progressBar) progressBar.style.width = `${progressInLevel}%`;
+            
+            // Render Level Badge next to User Name
+            let badge = '🌱 Sprout Guardian';
+            if (level >= 6 && level <= 10) badge = '🌿 Green Ranger';
+            if (level >= 11) badge = '🌲 Eco Legend';
+            
+            if (document.getElementById('user-name')) {
+                document.getElementById('user-name').innerHTML = `${userData.name} <span class="level-badge" style="font-size: 0.75rem; background: rgba(0, 255, 115, 0.15); color: var(--primary); padding: 4px 10px; border-radius: 50px; margin-left: 10px; font-weight: 700; border: 1px solid rgba(0,255,115,0.3);">${badge} (Lv. ${level})</span>`;
+            }
             
             // Add level indicator if you want, but sticking to progress for now
         }
@@ -306,6 +326,10 @@ async function loadMyReports() {
                         <small style="font-weight: 700; color: var(--text-muted);">${new Date(report.createdAt).toLocaleDateString()}</small>
                     </div>
                     <p style="font-weight: 500; line-height: 1.4; color: var(--text-main);">${report.description}</p>
+                    <div style="display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap;">
+                        <span style="background: rgba(0, 255, 115, 0.1); color: var(--primary); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;">🏷️ ${report.category || 'General'}</span>
+                        <span style="background: rgba(251, 191, 36, 0.1); color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;">⚠️ Severity: ${report.aiSeverity || 'Low'}</span>
+                    </div>
                     ${report.status === 'Completed' ? `
                     <div class="feedback-section">
                         <span class="feedback-title">Cleanup Quality</span>
@@ -413,6 +437,10 @@ async function loadAllReports() {
                         </div>
                         <p style="margin-bottom: 0.5rem;"><strong style="color: var(--primary);">${report.userId ? report.userId.name : 'Unknown User'}</strong></p>
                         <p style="font-size: 0.95rem; margin: 0.8rem 0; color: var(--text-main); line-height: 1.5;">"${report.description}"</p>
+                        <div style="display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap;">
+                            <span style="background: rgba(139, 92, 246, 0.15); color: #c4b5fd; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;">🏷️ Category: ${report.category || 'General'}</span>
+                            <span style="background: rgba(251, 191, 36, 0.15); color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;">⚠️ Severity: ${report.aiSeverity || 'Low'}</span>
+                        </div>
                         ${report.rating ? `
                             <div class="feedback-section" style="margin-bottom: 10px; border:none; padding:0; gap:2px;">
                                 <span class="feedback-title">Citizen Feedback</span>
@@ -562,16 +590,267 @@ async function loadLeaderboard() {
         const list = document.getElementById('leaderboard-list');
         if(!list) return;
         
-        list.innerHTML = users.map((u, index) => `
-            <li>
-                <span class="rank">#${index + 1}</span>
-                <span class="name">${u.name}</span>
-                <span class="points">🌱 ${u.ecoPoints} Pts</span>
-            </li>
-        `).join('');
+        list.innerHTML = users.map((u, index) => {
+            const points = u.ecoPoints || 0;
+            const level = Math.floor(points / 100) + 1;
+            let badge = '🌱 Sprout Guardian';
+            if (level >= 6 && level <= 10) badge = '🌿 Green Ranger';
+            if (level >= 11) badge = '🌲 Eco Legend';
+            
+            return `
+                <li>
+                    <span class="rank">#${index + 1}</span>
+                    <div style="flex: 1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                        <span class="name" style="font-weight: 600;">${u.name} <span style="font-size: 0.75rem; opacity: 0.8; margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05);">${badge} (Lv. ${level})</span></span>
+                        <span class="points">🌱 ${u.ecoPoints} Pts</span>
+                    </div>
+                </li>
+            `;
+        }).join('');
     } catch (err) {
         console.error(err);
     }
+}
+
+async function loadAdminWarriors() {
+    try {
+        const res = await fetch(`${API_URL}/api/auth/users`, {
+            headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+        const users = await res.json();
+        const list = document.getElementById('admin-warriors-list');
+        if(!list) return;
+        
+        list.innerHTML = users.map((u, index) => {
+            const points = u.ecoPoints || 0;
+            const level = Math.floor(points / 100) + 1;
+            let badge = '🌱 Sprout Guardian';
+            if (level >= 6 && level <= 10) badge = '🌿 Green Ranger';
+            if (level >= 11) badge = '🌲 Eco Legend';
+            
+            return `
+                <tr>
+                    <td style="padding: 1rem 0.5rem; font-weight: 700; color: var(--primary);">#${index + 1}</td>
+                    <td style="padding: 1rem 0.5rem;">
+                        <div style="font-weight: 600;">${u.name}</div>
+                        <div style="font-size: 0.75rem; margin-top: 4px;"><span style="background: rgba(0, 255, 115, 0.1); color: var(--primary); padding: 2px 6px; border-radius: 4px; font-weight: 700;">Lv. ${level} ${badge}</span></div>
+                    </td>
+                    <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${u.email}</td>
+                    <td style="padding: 1rem 0.5rem;"><span class="points" style="color: var(--accent); font-weight: 700; background: rgba(251, 191, 36, 0.1); padding: 0.2rem 0.8rem; border-radius: 20px;">🌱 ${u.ecoPoints} Pts</span></td>
+                    <td style="padding: 1rem 0.5rem; color: var(--text-muted);">${new Date(u.createdAt).toLocaleDateString()}</td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error(err);
+        const list = document.getElementById('admin-warriors-list');
+        if(list) list.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Failed to load eco-warriors list.</td></tr>`;
+    }
+}
+
+let allRedemptions = [];
+
+async function loadAdminRedemptions() {
+    try {
+        const res = await fetch(`${API_URL}/api/auth/redemptions`, {
+            headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+        allRedemptions = await res.json();
+        renderRedemptionsTable(allRedemptions);
+    } catch (err) {
+        console.error(err);
+        const list = document.getElementById('admin-redemptions-list');
+        if(list) list.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">Failed to load redemptions log.</td></tr>`;
+    }
+}
+
+function renderRedemptionsTable(data) {
+    const list = document.getElementById('admin-redemptions-list');
+    if(!list) return;
+
+    if (data.length === 0) {
+        list.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">No redemptions found.</td></tr>`;
+        return;
+    }
+
+    list.innerHTML = data.map(r => {
+        const userName = r.userId ? r.userId.name : 'Unknown User';
+        const userEmail = r.userId ? r.userId.email : '';
+        const isApproved = r.status === 'Approved';
+        
+        return `
+            <tr>
+                <td style="padding: 1rem 0.5rem;">
+                    <div style="font-weight: 600;">${userName}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">${userEmail}</div>
+                </td>
+                <td style="padding: 1rem 0.5rem; font-weight: 500;">${r.reward}</td>
+                <td style="padding: 1rem 0.5rem;"><code style="font-family: monospace; font-size: 0.95rem; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; color: var(--primary); font-weight: 700; border: 1px solid rgba(0,255,115,0.2);">${r.code}</code></td>
+                <td style="padding: 1rem 0.5rem; font-weight: 700; color: var(--accent);">💰 ${r.points} Pts</td>
+                <td style="padding: 1rem 0.5rem;">
+                    <span style="padding: 4px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 800; border: 1px solid ${isApproved ? 'rgba(0, 255, 115, 0.4)' : 'rgba(251, 191, 36, 0.4)'}; background: ${isApproved ? 'rgba(0, 255, 115, 0.1)' : 'rgba(251, 191, 36, 0.1)'}; color: ${isApproved ? 'var(--primary)' : 'var(--accent)'};">
+                        ${r.status}
+                    </span>
+                </td>
+                <td style="padding: 1rem 0.5rem;">
+                    ${isApproved 
+                        ? `<button class="btn-secondary disabled" style="padding: 4px 10px; font-size: 0.75rem;" disabled>Disbursed</button>`
+                        : `<button class="btn-primary" onclick="disburseRedemption('${r._id}')" style="padding: 4px 10px; font-size: 0.75rem;">Disburse</button>`
+                    }
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function filterRedemptions() {
+    const query = document.getElementById('redemption-search').value.toLowerCase().trim();
+    if (!query) {
+        renderRedemptionsTable(allRedemptions);
+        return;
+    }
+
+    const filtered = allRedemptions.filter(r => {
+        const userName = r.userId ? r.userId.name.toLowerCase() : '';
+        const userEmail = r.userId ? r.userId.email.toLowerCase() : '';
+        const code = r.code.toLowerCase();
+        const reward = r.reward.toLowerCase();
+        
+        return userName.includes(query) || userEmail.includes(query) || code.includes(query) || reward.includes(query);
+    });
+
+    renderRedemptionsTable(filtered);
+}
+
+async function disburseRedemption(id) {
+    if(!confirm('Mark this reward as disbursed/completed?')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/auth/redemptions/${id}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${user.token}`
+            }
+        });
+        
+        if (res.ok) {
+            alert('Reward marked as Disbursed/Approved!');
+            loadAdminRedemptions();
+        } else {
+            const data = await res.json();
+            alert(data.message);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function checkCleanupNotifications() {
+    try {
+        const res = await fetch(`${API_URL}/api/reports/notifications`, {
+            headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+        const reports = await res.json();
+        
+        if (reports && reports.length > 0) {
+            const r = reports[0];
+            
+            const descEl = document.getElementById('alert-modal-desc');
+            const sliderWrapper = document.getElementById('alert-modal-slider-wrapper');
+            const modal = document.getElementById('alert-modal-container');
+            
+            if (descEl && sliderWrapper && modal) {
+                descEl.innerText = `Hooray! The garbage hotspot you reported ("${r.description}") has been successfully cleaned up and verified! You have been awarded +50 Eco-Points.`;
+                
+                // Construct the comparison slider HTML
+                sliderWrapper.innerHTML = `
+                    <div class="comparison-slider" style="margin: 0;">
+                        <img src="${r.cleanedImageUrl}" alt="After" class="after-image">
+                        <img src="${r.imageUrl}" alt="Before" class="before-image" id="before-alert-${r._id}">
+                        <input type="range" class="slider-input" min="0" max="100" value="50" oninput="updateSlider('alert-${r._id}', this.value)">
+                        <div class="slider-handle-line" id="line-alert-${r._id}"></div>
+                        <div class="slider-handle-button" id="btn-alert-${r._id}"></div>
+                    </div>
+                `;
+                
+                // Show the modal
+                modal.style.display = 'flex';
+                
+                // Set up the default slider clip-path
+                setTimeout(() => {
+                    updateSlider(`alert-${r._id}`, 50);
+                }, 100);
+            }
+        }
+    } catch (err) {
+        console.error('Error checking notifications:', err);
+    }
+}
+
+async function dismissAlertModal() {
+    const modal = document.getElementById('alert-modal-container');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    
+    // Send acknowledgement to backend
+    try {
+        await fetch(`${API_URL}/api/reports/notifications/ack`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${user.token}`
+            }
+        });
+    } catch (err) {
+        console.error('Failed to acknowledge notification:', err);
+    }
+}
+
+function startOnboardingTour() {
+    if (typeof window.driver === 'undefined' || typeof window.driver.js === 'undefined') {
+        console.error('Driver.js is not loaded yet.');
+        return;
+    }
+
+    const driverObj = window.driver.js.driver({
+        showProgress: true,
+        steps: [
+            {
+                element: '#report-section',
+                popover: {
+                    title: '📸 Log a Discovery',
+                    description: 'Capture a photo of litter, specify the details, tag your geolocation, and upload it. The network will verify it and you will earn Eco-Points!',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#heatmap-section',
+                popover: {
+                    title: '🗺️ Waste Hotspots',
+                    description: 'View real-time, density-weighted hotspots needing restoration in your community.',
+                    side: 'top',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#rewards-section',
+                popover: {
+                    title: '🚌 Redeeming Eco-Incentives',
+                    description: 'Redeem your hard-earned Eco-Points here for Cafe Coupons, Light Bill Discounts, or Transit Passes!',
+                    side: 'top',
+                    align: 'start'
+                }
+            }
+        ],
+        onDestroyed: () => {
+            localStorage.setItem('trashgo-tour-completed', 'true');
+        }
+    });
+
+    driverObj.drive();
 }
 
 // Heatmap Initialization

@@ -794,3 +794,22 @@ select.form-input {
     height: clamp(300px, 60vw, 400px);
 }
 
+/* Admin Table Styles */
+.admin-table th {
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.admin-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.95rem;
+}
+.admin-table tbody tr {
+    transition: all 0.2s ease;
+}
+.admin-table tbody tr:hover {
+    background: rgba(0, 255, 115, 0.03);
+}
+

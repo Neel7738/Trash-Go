@@ -2,6 +2,7 @@ const express = require('express');
 const Report = require('../models/Report');
 const { protect, admin } = require('../middleware/auth');
 const { upload } = require('../config/cloudinary');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const router = express.Router();
 
 // User: Submit report
@@ -19,7 +20,57 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
             status: { $ne: 'Completed' }
         });
 
-        const reportPriority = nearbyReports.length;
+        // AI Waste Scanning
+        let aiAnalysis = { isGarbage: true, category: 'General', severity: 'Low' };
+        if (process.env.GEMINI_API_KEY) {
+            try {
+                console.log('Sending image to Gemini for waste scanning analysis...');
+                const imageRes = await fetch(req.file.path);
+                const imageBuffer = await imageRes.arrayBuffer();
+
+                const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+                const model = genAI.getGenerativeModel({
+                    model: 'gemini-2.5-flash',
+                    generationConfig: { responseMimeType: 'application/json' }
+                });
+
+                const prompt = `Analyze this image of reported litter/garbage. Respond in JSON matching this schema:
+{
+  "isGarbage": true/false (true if the image actually contains garbage, litter, or waste, false otherwise),
+  "category": "Plastic" | "Metal" | "Electronic" | "Paper" | "Biohazard" | "General" (choose the most fitting category),
+  "severity": "Low" | "Medium" | "High" (Low for single bottles/cups, Medium for small piles, High for large dumps/blockages)
+}`;
+
+                const imagePart = {
+                    inlineData: {
+                        data: Buffer.from(imageBuffer).toString('base64'),
+                        mimeType: 'image/jpeg'
+                    }
+                };
+
+                const result = await model.generateContent([prompt, imagePart]);
+                const responseText = result.response.text();
+                console.log('Gemini Scan Result:', responseText);
+                const parsed = JSON.parse(responseText);
+                if (parsed && typeof parsed.isGarbage === 'boolean') {
+                    aiAnalysis = parsed;
+                }
+            } catch (err) {
+                console.error('Gemini AI Scan failed:', err.message);
+            }
+        }
+
+        // Validate if image actually contains garbage
+        if (!aiAnalysis.isGarbage) {
+            return res.status(400).json({ message: 'The uploaded image does not appear to contain garbage or waste. Please upload a clear photo of the litter to log a discovery.' });
+        }
+
+        // Calculate severity weight (Low = +1, Medium = +3, High = +5)
+        let severityWeight = 1;
+        if (aiAnalysis.severity === 'Medium') severityWeight = 3;
+        if (aiAnalysis.severity === 'High') severityWeight = 5;
+
+        const reportPriority = nearbyReports.length + severityWeight;
 
         const report = new Report({
             userId: req.user._id,
@@ -27,7 +78,10 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
             description,
             latitude,
             longitude,
-            priority: reportPriority
+            priority: reportPriority,
+            category: aiAnalysis.category,
+            aiSeverity: aiAnalysis.severity,
+            isGarbage: aiAnalysis.isGarbage
         });
 
         // Increment priority for all nearby reports as well
@@ -40,8 +94,12 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
 
         const createdReport = await report.save();
 
-        // Award points for reporting
-        req.user.ecoPoints += 10;
+        // Award points for reporting (Base: 10 pts + extra points for severity)
+        let earnedPoints = 10;
+        if (aiAnalysis.severity === 'Medium') earnedPoints += 5; // Medium: 15 pts total
+        if (aiAnalysis.severity === 'High') earnedPoints += 10;  // High: 20 pts total
+
+        req.user.ecoPoints += earnedPoints;
         await req.user.save();
 
         res.status(201).json(createdReport);
@@ -229,6 +287,33 @@ router.delete('/:id', protect, admin, async (req, res) => {
         } else {
             res.status(404).json({ message: 'Report not found' });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// User: Get unnotified completed reports (alerts)
+router.get('/notifications', protect, async (req, res) => {
+    try {
+        const reports = await Report.find({
+            userId: req.user._id,
+            status: 'Completed',
+            notified: { $ne: true }
+        });
+        res.json(reports);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// User: Acknowledge completed reports notifications
+router.put('/notifications/ack', protect, async (req, res) => {
+    try {
+        await Report.updateMany(
+            { userId: req.user._id, status: 'Completed', notified: { $ne: true } },
+            { notified: true }
+        );
+        res.json({ message: 'Notifications acknowledged' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

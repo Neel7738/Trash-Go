@@ -9,7 +9,11 @@ const ReportSchema = new mongoose.Schema({
     longitude: { type: Number, required: true },
     priority: { type: Number, default: 0 },
     status: { type: String, enum: ['Pending', 'In Progress', 'Completed'], default: 'Pending' },
-    rating: { type: Number, min: 1, max: 5 }
+    rating: { type: Number, min: 1, max: 5 },
+    category: { type: String, default: 'General' },
+    aiSeverity: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Low' },
+    isGarbage: { type: Boolean, default: true },
+    notified: { type: Boolean, default: false }
 }, {
     timestamps: true
 });
