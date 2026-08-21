@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
 const Redemption = require('../models/Redemption');
 const { protect, admin } = require('../middleware/auth');
@@ -9,55 +10,81 @@ const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
-router.post('/signup', async (req, res) => {
+const setTokenCookie = (res, token) => {
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+};
+
+// Rate limiter for login and signup attempts
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 15,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many login/signup attempts from this IP, please try again after 15 minutes.' }
+});
+
+router.post('/signup', authLimiter, async (req, res) => {
     const { name, email, password } = req.body;
     try {
-        const userExists = await User.findOne({ email });
+        const userExists = await User.findOne({ email: email.toLowerCase() });
         if (userExists) return res.status(400).json({ message: 'User already exists' });
         
         const user = await User.create({ name, email, password, role: 'user' });
+        const token = generateToken(user._id);
+        setTokenCookie(res, token);
+
         res.status(201).json({
             _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,
-            token: generateToken(user._id)
+            token: token
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
     let { email, password } = req.body;
     try {
-        console.log(`Login attempt for email: "${email}"`);
-        email = email.toLowerCase();
+        email = (email || '').toLowerCase();
         const user = await User.findOne({ email });
         
         if (!user) {
-            console.log(`User not found: "${email}"`);
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
         const isMatch = await user.matchPassword(password);
-        console.log(`Password match for "${email}": ${isMatch}`);
 
         if (isMatch) {
+            const token = generateToken(user._id);
+            setTokenCookie(res, token);
+
             res.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                token: generateToken(user._id)
+                token: token
             });
         } else {
             res.status(401).json({ message: 'Invalid email or password' });
         }
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ message: error.message });
+        console.error('Login error details:', error.message);
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
+});
+
+router.post('/logout', (req, res) => {
+    res.clearCookie('token');
+    res.json({ message: 'Logged out successfully' });
 });
 
 router.get('/profile', protect, async (req, res) => {
@@ -65,7 +92,7 @@ router.get('/profile', protect, async (req, res) => {
         const user = await User.findById(req.user._id).select('-password');
         res.json(user);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -74,7 +101,7 @@ router.get('/leaderboard', async (req, res) => {
         const users = await User.find({ role: 'user' }).sort({ ecoPoints: -1 }).limit(3).select('name ecoPoints');
         res.json(users);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -83,7 +110,7 @@ router.get('/users', protect, admin, async (req, res) => {
         const users = await User.find({ role: 'user' }).sort({ ecoPoints: -1 }).select('name email ecoPoints createdAt');
         res.json(users);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -116,7 +143,7 @@ router.post('/redeem', protect, async (req, res) => {
             newPoints: user.ecoPoints 
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -127,7 +154,7 @@ router.get('/redemptions', protect, admin, async (req, res) => {
             .sort({ status: 1, createdAt: -1 });
         res.json(redemptions);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -143,7 +170,7 @@ router.put('/redemptions/:id', protect, admin, async (req, res) => {
         
         res.json({ message: 'Redemption marked as Approved/Disbursed', redemption });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 

@@ -104,7 +104,7 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
 
         res.status(201).json(createdReport);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -114,7 +114,7 @@ router.get('/', protect, admin, async (req, res) => {
         const reports = await Report.find({}).populate('userId', 'name email ecoPoints').sort({ priority: -1, createdAt: -1 });
         res.json(reports);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -124,7 +124,7 @@ router.get('/heatmap', async (req, res) => {
         const reports = await Report.find({ status: { $ne: 'Completed' } }).select('latitude longitude priority');
         res.json(reports);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -171,7 +171,7 @@ router.get('/grouped', protect, admin, async (req, res) => {
 
         res.json(clusters);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -181,7 +181,7 @@ router.get('/myreports', protect, async (req, res) => {
         const reports = await Report.find({ userId: req.user._id });
         res.json(reports);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -223,7 +223,7 @@ router.put('/:id/rate', protect, async (req, res) => {
 
         res.json({ message: 'Thank you for your feedback! Earned 5 Eco-Points.', report });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -270,7 +270,7 @@ router.put('/:id', protect, admin, upload.single('cleanedImage'), async (req, re
             res.status(404).json({ message: 'Report not found' });
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -288,7 +288,7 @@ router.delete('/:id', protect, admin, async (req, res) => {
             res.status(404).json({ message: 'Report not found' });
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -302,7 +302,7 @@ router.get('/notifications', protect, async (req, res) => {
         });
         res.json(reports);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 
@@ -315,7 +315,7 @@ router.put('/notifications/ack', protect, async (req, res) => {
         );
         res.json({ message: 'Notifications acknowledged' });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: process.env.NODE_ENV === 'production' ? 'Server error' : error.message });
     }
 });
 

@@ -10,7 +10,12 @@ const createAdmin = async () => {
         console.log('Connected to MongoDB for admin setup...');
 
         const adminEmail = process.env.ADMIN_EMAIL || 'admin@trashgo.com';
-        const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+        const adminPassword = process.env.ADMIN_PASSWORD;
+
+        if (!adminPassword) {
+            console.error('Security Error: ADMIN_PASSWORD must be defined in .env to initialize admin user.');
+            process.exit(1);
+        }
 
         const adminExists = await User.findOne({ email: adminEmail });
         if (adminExists) {

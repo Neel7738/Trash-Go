@@ -7,7 +7,7 @@ TrashGo is a full-stack civic-tech platform that connects citizens with governme
 ## 🚀 Features
 
 ### 👤 Citizen Portal
-- **User Authentication:** Secure signup and login with JWT-based sessions.
+- **User Authentication:** Secure signup and login supporting both `HttpOnly` cookie sessions and JWT-based authorization headers.
 - **AI-Powered Waste Scanning:** Integrates with the **Google Gemini API** to automatically analyze waste uploads:
   - **Smart Validation:** Instantly rejects non-garbage images to prevent spam reporting.
   - **Auto-Categorization:** Classifies waste into types (Plastic, Metal, Electronic, Paper, Biohazard, or General).
@@ -24,16 +24,44 @@ TrashGo is a full-stack civic-tech platform that connects citizens with governme
 - **Rewards Redemption Manager:** A persistent logs manager where admins can view reward claim codes, search/filter user requests, and mark redemptions as Approved/Disbursed.
 - **Verification Sliders:** Admins can upload a post-cleanup verification image and resolve reports using visual comparison sliders.
 
+### 🔒 Enterprise-Grade Security & Hardening
+- **HTTP Security Headers (`Helmet`):** Enforces strict HTTP security headers (CSP, X-Frame-Options, X-Content-Type-Options) with tailored content policies for Leaflet map tiles, OpenStreetMap reverse geocoding, and Cloudinary media assets.
+- **Rate Limiting & Anti-Brute-Force:** Throttles general API requests (200 requests/15 mins) and enforces strict protection on login and registration endpoints (15 attempts/15 mins) via `express-rate-limit`.
+- **HttpOnly & SameSite Cookie Auth:** Transmits authentication tokens in `HttpOnly` cookies to mitigate Cross-Site Scripting (XSS) session hijacking risks.
+- **Configured CORS Policy:** Restricts backend API access to allowed origins with credentialed request verification.
+- **Production Error Masking & Clean Logging:** Strips raw internal database error traces from API responses and eliminates sensitive credential logging from server stdout.
+- **Hardened Admin Credentials Setup:** Enforces mandatory `ADMIN_PASSWORD` environment variables for initialization scripts, eliminating hardcoded weak defaults.
+
 ---
 
 ## 🛠️ Tech Stack
 
 - **Frontend:** HTML5, CSS3, Vanilla JavaScript, Leaflet.js (Heatmaps), `driver.js` (Onboarding Tour)
 - **Backend:** Node.js, Express.js (v5+)
+- **Security Middleware:** `Helmet`, `express-rate-limit`, `cookie-parser`, `cors`, `bcryptjs`
 - **AI Engine:** Google Gemini AI API (`@google/generative-ai` SDK)
 - **Database:** MongoDB Atlas with Mongoose
 - **Image Storage:** Cloudinary
 - **Geocoding:** OpenStreetMap (Nominatim API)
+
+---
+
+## ⚙️ Environment Configuration (`.env`)
+
+To run TrashGo locally or in production, create a `.env` file in the project root:
+
+```env
+PORT=5000
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/trashgo
+JWT_SECRET=your_super_secret_jwt_key_here
+GEMINI_API_KEY=your_google_gemini_api_key
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+ADMIN_EMAIL=admin@trashgo.com
+ADMIN_PASSWORD=your_secure_admin_password
+ALLOWED_ORIGINS=http://localhost:5000
+```
 
 ---
 
@@ -42,6 +70,7 @@ TrashGo is a full-stack civic-tech platform that connects citizens with governme
 ```text
 ├── config/             # DB connection configurations & Cloudinary upload rules
 ├── middleware/         # Custom Express middlewares (auth token validation, admin role guard)
+│   └── auth.js         # JWT & HttpOnly cookie protection middleware
 ├── models/             # Mongoose database schemas:
 │   ├── User.js         # Citizen profile & Eco-Points ledger
 │   ├── Report.js       # Waste coordinates, category, severity, and status
@@ -52,10 +81,10 @@ TrashGo is a full-stack civic-tech platform that connects citizens with governme
 │   ├── style.css       # Premium custom dark stylesheet
 │   └── script.js       # Client API routing & Leaflet maps logic
 ├── routes/             # Backend API endpoint routes:
-│   ├── auth.js         # Login, registration, leaderboard, & redemption APIs
+│   ├── auth.js         # Rate-limited login, registration, leaderboard, & redemption APIs
 │   └── reports.js      # Report submissions, geocoding, Gemini scans, & notifications
-├── server.js           # Main application launch script
-├── init_admin.js       # Utility database script to bootstrap administrative profiles
+├── server.js           # Express app setup with Helmet security, rate limiters, & CORS
+├── init_admin.js       # Secure utility script to bootstrap administrative profiles
 ├── diagnose_db.js      # Utility script for database diagnostics
 └── .env                # Secrets & environment configurations (ignored by git)
 ```
@@ -84,6 +113,32 @@ graph TD
 5. **Notify:** The reporting citizen receives an instant notification popup showing the before/after comparison time-lapse slider.
 
 ---
+
+## 🚀 Getting Started
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Neel7738/Trash-Go.git
+   cd Trash-Go
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install --legacy-peer-deps
+   ```
+
+3. **Configure environment variables:**
+   Create a `.env` file using the configuration schema above.
+
+4. **Initialize Admin user (Optional):**
+   ```bash
+   node init_admin.js
+   ```
+
+5. **Start the application server:**
+   ```bash
+   npm start
+   ```
 
 ---
 
