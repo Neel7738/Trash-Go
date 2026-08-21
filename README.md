@@ -46,24 +46,6 @@ TrashGo is a full-stack civic-tech platform that connects citizens with governme
 
 ---
 
-## ⚙️ Environment Configuration (`.env`)
-
-To run TrashGo locally or in production, create a `.env` file in the project root:
-
-```env
-PORT=5000
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/trashgo
-JWT_SECRET=your_super_secret_jwt_key_here
-GEMINI_API_KEY=your_google_gemini_api_key
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-ADMIN_EMAIL=admin@trashgo.com
-ADMIN_PASSWORD=your_secure_admin_password
-ALLOWED_ORIGINS=http://localhost:5000
-```
-
----
 
 ## 📁 Project Structure
 
@@ -114,33 +96,6 @@ graph TD
 
 ---
 
-## 🚀 Getting Started
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Neel7738/Trash-Go.git
-   cd Trash-Go
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install --legacy-peer-deps
-   ```
-
-3. **Configure environment variables:**
-   Create a `.env` file using the configuration schema above.
-
-4. **Initialize Admin user (Optional):**
-   ```bash
-   node init_admin.js
-   ```
-
-5. **Start the application server:**
-   ```bash
-   npm start
-   ```
-
----
 
 ## 🔮 Future Scope
 - **Mobile Application:** Native Android/iOS versions for robust offline reporting capabilities.
